@@ -1,0 +1,17 @@
+# Ignore DB & runtime data
+db.sqlite3
+
+# Ignore IDE/editor configs
+.vscode/
+
+# Ignore Python cache & artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environment if present inside
+venv/
+
+# Ignore local images or uploads
+media/

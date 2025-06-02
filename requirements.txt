@@ -1,0 +1,15 @@
+asgiref==3.8.1
+boto3==1.37.9
+botocore==1.37.9
+Django==5.1.7
+django-storages==1.14.5
+djangorestframework==3.15.2
+ffmpeg-python==0.2.0
+future==1.0.0
+jmespath==1.0.1
+python-dateutil==2.9.0.post0
+s3transfer==0.11.4
+six==1.17.0
+sqlparse==0.5.3
+urllib3==2.3.0
+yt-dlp==2025.2.19
