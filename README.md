@@ -1,23 +1,20 @@
 # Nigerian Audio Scraper & REST API
 
-A Django and Django REST Framework (DRF) application designed to scrape, extract, convert, and manage Nigerian language audio datasets from YouTube. The system downloads audio from provided YouTube URLs, converts them into high-quality MP3 files using FFmpeg, organizes them by language category, and exposes a RESTful API for management and consumption.
+A Django REST Framework backend designed to extract, convert, and manage Nigerian language audio clips from online media URLs (YouTube, Vimeo, and other supported platforms). The application converts media to MP3 format, organizes audio files by language category, and provides a REST API for frontend web and mobile applications.
 
 ---
 
 ## 📌 Features
 
-- **YouTube Audio Extraction**: Downloads high-quality audio streams from YouTube videos using [`yt-dlp`](https://github.com/yt-dlp/yt-dlp).
-- **Automated MP3 Conversion**: Converts audio files to MP3 using [`ffmpeg-python`](https://github.com/kkroening/ffmpeg-python) with sanitized filenames and UUID suffixes to prevent naming collisions.
-- **Categorized Storage**: Automatically organizes audio files into category-specific directories (`media/audios/<category>/`).
-- **RESTful API**: Endpoints for scraping/downloading, listing with category filters, retrieving audio metadata/streaming URLs, and deleting audio items.
-- **Automated Disk Cleanup**: Custom deletion logic that removes the underlying audio file from the filesystem and removes empty category folders.
-- **Django Admin**: Built-in administration interface for inspecting and managing audio records.
+- **Multi-Platform Audio Extraction**: Extracts audio streams from online video and audio URLs supported by `yt-dlp`.
+- **Automated MP3 Conversion**: Converts downloaded streams to MP3 format using FFmpeg with unique identifiers to prevent collisions.
+- **Categorized Storage**: Organizes audio files by Nigerian language categories.
+- **Clean RESTful API**: Endpoints to scrape/download, list/filter, retrieve details, and delete audio records.
+- **Automatic Storage Cleanup**: Automatically removes physical audio files when their corresponding database records are deleted.
 
 ---
 
 ## 🗣️ Supported Language Categories
-
-The system supports categorization under the following Nigerian languages:
 
 - `Hausa`
 - `Igbo`
@@ -27,267 +24,358 @@ The system supports categorization under the following Nigerian languages:
 
 ---
 
-## 📁 Project Structure
+## 🛠️ Requirements & Setup
 
-```text
-nigerian_audio/
-├── api/                        # REST API application
-│   ├── serializers.py          # AudioContent ModelSerializer
-│   ├── urls.py                 # API routing definitions
-│   └── views.py                # API view functions (scrape, list, get, delete)
-├── audio_scraper/              # Core business logic application
-│   ├── admin.py                # Admin panel configuration
-│   ├── models.py               # AudioContent model & cleanup logic
-│   ├── utils.py                # YouTube download & FFmpeg conversion utilities
-│   └── migrations/             # Database migration files
-├── media/                      # Downloaded and converted audio files (runtime)
-│   └── audios/
-│       ├── Hausa/
-│       ├── Igbo/
-│       ├── Yoruba/
-│       ├── Efik/
-│       └── Tiv/
-├── nigerian_audio/             # Django project configuration
-│   ├── asgi.py
-│   ├── settings.py             # Project settings (INSTALLED_APPS, MEDIA_ROOT, etc.)
-│   ├── urls.py                 # Root URL configuration
-│   └── wsgi.py
-├── manage.py                   # Django CLI entrypoint
-├── requirements.txt            # Python package dependencies
-├── .gitignore                  # Git ignore rules
-└── README.md                   # Project documentation
-```
+### Prerequisites
 
----
+- **Python 3.10+**
+- **FFmpeg** (installed and available in system `PATH`)
 
-## 🛠️ Prerequisites
+### Quickstart
 
-Before getting started, make sure you have the following installed on your machine:
+1. **Clone the repository and navigate into the folder**:
+   ```bash
+   git clone <repository-url>
+   cd nigerian_audio
+   ```
 
-1. **Python 3.10+**: [Download Python](https://www.python.org/downloads/)
-2. **FFmpeg**: Required on your system `PATH` for audio processing and conversion.
-   - **Windows**:
-     ```powershell
-     winget install "FFmpeg (Essentials Build)"
-     # or via Chocolatey
-     choco install ffmpeg
-     ```
-   - **macOS** (via Homebrew):
-     ```bash
-     brew install ffmpeg
-     ```
-   - **Ubuntu / Debian**:
-     ```bash
-     sudo apt update && sudo apt install -y ffmpeg
-     ```
-   - Verify installation:
-     ```bash
-     ffmpeg -version
-     ```
+2. **Set up a virtual environment**:
+   ```bash
+   python -m venv venv
+   # On Windows:
+   .\venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Run migrations**:
+   ```bash
+   python manage.py migrate
+   ```
+
+5. **Start the API server**:
+   ```bash
+   python manage.py runserver
+   ```
+   The API will be available at `http://localhost:8000/`.
 
 ---
 
-## 🚀 Getting Started
+## 📡 API Endpoints Reference
 
-### 1. Clone the Repository
+Base URL: `http://localhost:8000` (or your deployed server domain)
 
-```bash
-git clone <repository-url>
-cd nigerian_audio
-```
+| Method | Endpoint | Description | Request Body / Params |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/` | Scrapes audio from an online URL, converts to MP3, and saves it | `{ "content_link": string, "category": string }` |
+| `GET` | `/audios/` | Lists all audio records | Optional query param: `?category=<category_name>` |
+| `GET` | `/audios/<id>/` | Retrieves single audio record by ID | URL path parameter `id` (integer) |
+| `DELETE` | `/audios_delete/<id>/` | Deletes an audio record and its physical file | URL path parameter `id` (integer) |
 
-### 2. Create and Activate a Virtual Environment
+---
 
-- **Windows (PowerShell)**:
-  ```powershell
-  python -m venv venv
-  .\venv\Scripts\Activate.ps1
+### Endpoint Details
+
+#### 1. `POST /` — Scrape & Convert Audio
+
+Extracts audio from a supported media URL and creates a new entry.
+
+- **Headers**: `Content-Type: application/json`
+- **Body**:
+  ```json
+  {
+    "content_link": "https://www.youtube.com/watch?v=EXAMPLE_ID",
+    "category": "Yoruba"
+  }
   ```
-- **macOS / Linux**:
-  ```bash
-  python3 -m venv venv
-  source venv/bin/activate
-  ```
-
-### 3. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Run Database Migrations
-
-```bash
-python manage.py migrate
-```
-
-### 5. Create a Superuser (Optional, for Admin Panel)
-
-```bash
-python manage.py createsuperuser
-```
-
-### 6. Start the Development Server
-
-```bash
-python manage.py runserver
-```
-
-The server will start at `http://127.0.0.1:8000/`.
-
----
-
-## 📡 API Reference
-
-### 1. Scrape & Download YouTube Audio
-
-Extracts audio from a given YouTube link, converts it to MP3, and creates an `AudioContent` database record.
-
-- **URL**: `/`
-- **Method**: `POST`
-- **Content-Type**: `application/json`
-
-**Request Body:**
-```json
-{
-  "content_link": "https://www.youtube.com/watch?v=EXAMPLE_ID",
-  "category": "Yoruba"
-}
-```
-
-**Success Response (`200 OK`):**
-```json
-{
-  "id": 1,
-  "title": "Example Yoruba Audio Title",
-  "content_link": "https://www.youtube.com/watch?v=EXAMPLE_ID",
-  "audio_file": "/media/audios/Yoruba/Example_Yoruba_Audio_a1b2c3d4.mp3",
-  "category": "Yoruba",
-  "timestamp": "2026-10-09T12:00:00Z"
-}
-```
-
-**Error Responses:**
-- `400 Bad Request`: Missing `content_link` or `category`.
-- `500 Internal Server Error`: Failed to download or convert YouTube audio.
-
----
-
-### 2. List Audio Records
-
-Retrieves a list of all audio files. Can optionally filter by category.
-
-- **URL**: `/audios/`
-- **Method**: `GET`
-- **Query Parameters**:
-  - `category` *(optional)*: Filter by language (e.g. `?category=Hausa`)
-
-**Example Request:**
-```bash
-curl -X GET "http://127.0.0.1:8000/audios/?category=Hausa"
-```
-
-**Success Response (`200 OK`):**
-```json
-[
+- **Response (`200 OK`)**:
+  ```json
   {
     "id": 1,
-    "title": "Hausa News Broadcast",
+    "title": "Audio Title Example",
     "content_link": "https://www.youtube.com/watch?v=EXAMPLE_ID",
-    "audio_file": "/media/audios/Hausa/Hausa_News_Broadcast_e5f6g7h8.mp3",
+    "audio_file": "/media/audios/Yoruba/Audio_Title_Example_a1b2c3d4.mp3",
+    "category": "Yoruba",
+    "timestamp": "2026-10-09T12:00:00Z"
+  }
+  ```
+
+#### 2. `GET /audios/` — List Audios
+
+Retrieves all audio entries, or filters them by category.
+
+- **Query Parameters**:
+  - `category` *(optional)*: e.g., `/audios/?category=Hausa`
+- **Response (`200 OK`)**:
+  ```json
+  [
+    {
+      "id": 1,
+      "title": "Hausa News Episode 1",
+      "content_link": "https://www.example.com/video",
+      "audio_file": "/media/audios/Hausa/Hausa_News_Episode_1_1234abcd.mp3",
+      "category": "Hausa",
+      "timestamp": "2026-10-09T12:00:00Z"
+    }
+  ]
+  ```
+
+#### 3. `GET /audios/<id>/` — Retrieve Audio
+
+Fetches metadata and playback URL for a specific audio item.
+
+- **Response (`200 OK`)**:
+  ```json
+  {
+    "id": 1,
+    "title": "Hausa News Episode 1",
+    "content_link": "https://www.example.com/video",
+    "audio_file": "/media/audios/Hausa/Hausa_News_Episode_1_1234abcd.mp3",
     "category": "Hausa",
     "timestamp": "2026-10-09T12:00:00Z"
   }
-]
+  ```
+
+#### 4. `DELETE /audios_delete/<id>/` — Delete Audio
+
+Deletes the audio metadata and associated MP3 file from storage.
+
+- **Response (`200 OK`)**:
+  ```json
+  {
+    "message": "Audio  deleted successfully"
+  }
+  ```
+
+---
+
+## 💻 Frontend Integration Guide
+
+Here is how frontend client applications (React, Vue, Next.js, or Vanilla JS) can interact with this API.
+
+### 1. API Client Helper (JavaScript / TypeScript)
+
+```javascript
+const API_BASE_URL = 'http://localhost:8000'; // Replace with your production API URL
+
+export const audioApi = {
+  // Scrape and download a new audio
+  scrapeAudio: async (contentLink, category) => {
+    const response = await fetch(`${API_BASE_URL}/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content_link: contentLink, category }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to scrape audio');
+    }
+    return response.json();
+  },
+
+  // Fetch audio list (with optional category filter)
+  getAudios: async (category = '') => {
+    const url = category
+      ? `${API_BASE_URL}/audios/?category=${encodeURIComponent(category)}`
+      : `${API_BASE_URL}/audios/`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      if (response.status === 404) return []; // No audios found
+      throw new Error('Failed to fetch audios');
+    }
+    return response.json();
+  },
+
+  // Get a single audio item
+  getAudioById: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/audios/${id}/`);
+    if (!response.ok) throw new Error('Audio not found');
+    return response.json();
+  },
+
+  // Delete an audio item
+  deleteAudio: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/audios_delete/${id}/`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete audio');
+    return response.json();
+  },
+
+  // Helper to build full media stream URL for HTML5 <audio> players
+  getMediaUrl: (audioFilePath) => {
+    if (!audioFilePath) return '';
+    return audioFilePath.startsWith('http')
+      ? audioFilePath
+      : `${API_BASE_URL}${audioFilePath}`;
+  },
+};
 ```
 
-**Error Response (`404 Not Found`):**
-```json
-{
-  "message": "No audio files found"
+---
+
+### 2. Frontend Usage Example (React Component)
+
+```jsx
+import React, { useState, useEffect } from 'react';
+import { audioApi } from './api';
+
+const CATEGORIES = ['Hausa', 'Igbo', 'Yoruba', 'Efik', 'Tiv'];
+
+export default function AudioDashboard() {
+  const [audios, setAudios] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [urlInput, setUrlInput] = useState('');
+  const [categoryInput, setCategoryInput] = useState('Yoruba');
+  const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+
+  // Load audios on mount or when category filter changes
+  useEffect(() => {
+    loadAudios();
+  }, [selectedCategory]);
+
+  const loadAudios = async () => {
+    try {
+      const data = await audioApi.getAudios(selectedCategory);
+      setAudios(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Handle Scraping / Submitting New URL
+  const handleScrape = async (e) => {
+    e.preventDefault();
+    if (!urlInput.trim()) return;
+
+    setLoading(true);
+    setStatusMessage('Downloading and converting audio... Please wait.');
+    try {
+      await audioApi.scrapeAudio(urlInput, categoryInput);
+      setUrlInput('');
+      setStatusMessage('Audio successfully saved!');
+      loadAudios(); // Refresh list
+    } catch (err) {
+      setStatusMessage(`Error: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Deleting Audio
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this audio?')) return;
+    try {
+      await audioApi.deleteAudio(id);
+      setAudios((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', fontFamily: 'sans-serif' }}>
+      <h1>Nigerian Audio Hub</h1>
+
+      {/* Scraper Form */}
+      <form onSubmit={handleScrape} style={{ marginBottom: '24px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <input
+          type="url"
+          placeholder="Paste video/media URL..."
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          required
+          style={{ flex: '1', minWidth: '240px', padding: '8px' }}
+        />
+        <select
+          value={categoryInput}
+          onChange={(e) => setCategoryInput(e.target.value)}
+          style={{ padding: '8px' }}
+        >
+          {CATEGORIES.map((cat) => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+        <button type="submit" disabled={loading} style={{ padding: '8px 16px' }}>
+          {loading ? 'Processing...' : 'Extract & Save'}
+        </button>
+      </form>
+
+      {statusMessage && <p style={{ fontWeight: 'bold' }}>{statusMessage}</p>}
+
+      {/* Filter Tabs */}
+      <div style={{ marginBottom: '16px', display: 'flex', gap: '8px' }}>
+        <button
+          onClick={() => setSelectedCategory('')}
+          style={{ fontWeight: selectedCategory === '' ? 'bold' : 'normal' }}
+        >
+          All
+        </button>
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            style={{ fontWeight: selectedCategory === cat ? 'bold' : 'normal' }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Audio List & Playback */}
+      <div>
+        {audios.length === 0 ? (
+          <p>No audio files found.</p>
+        ) : (
+          audios.map((audio) => (
+            <div
+              key={audio.id}
+              style={{
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '12px',
+              }}
+            >
+              <h3>{audio.title}</h3>
+              <p style={{ fontSize: '13px', color: '#666' }}>
+                Category: <strong>{audio.category}</strong> | Added: {new Date(audio.timestamp).toLocaleDateString()}
+              </p>
+
+              {/* Native HTML5 Audio Player */}
+              <audio
+                controls
+                src={audioApi.getMediaUrl(audio.audio_file)}
+                style={{ width: '100%', margin: '8px 0' }}
+              />
+
+              <div>
+                <button
+                  onClick={() => handleDelete(audio.id)}
+                  style={{ color: 'red', cursor: 'pointer' }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
 }
 ```
 
 ---
 
-### 3. Retrieve Single Audio Record
+### 3. Key Frontend Considerations
 
-Fetches detailed metadata and media URL for a specific audio entry.
-
-- **URL**: `/audios/<int:pk>/`
-- **Method**: `GET`
-
-**Example Request:**
-```bash
-curl -X GET "http://127.0.0.1:8000/audios/1/"
-```
-
-**Success Response (`200 OK`):**
-```json
-{
-  "id": 1,
-  "title": "Hausa News Broadcast",
-  "content_link": "https://www.youtube.com/watch?v=EXAMPLE_ID",
-  "audio_file": "/media/audios/Hausa/Hausa_News_Broadcast_e5f6g7h8.mp3",
-  "category": "Hausa",
-  "timestamp": "2026-10-09T12:00:00Z"
-}
-```
-
-**Error Response (`404 Not Found`):**
-```json
-{
-  "error": "Audio not found"
-}
-```
-
----
-
-### 4. Delete Audio Record
-
-Deletes the database entry and removes the corresponding `.mp3` file from disk. If the category directory is empty after deletion, the folder is removed as well.
-
-- **URL**: `/audios_delete/<int:pk>/`
-- **Method**: `DELETE`
-
-**Example Request:**
-```bash
-curl -X DELETE "http://127.0.0.1:8000/audios_delete/1/"
-```
-
-**Success Response (`200 OK`):**
-```json
-{
-  "message": "Audio  deleted successfully"
-}
-```
-
-**Error Response (`404 Not Found`):**
-```json
-{
-  "error": "Audio not found"
-}
-```
-
----
-
-## 🛡️ Django Administration
-
-You can access the Django admin panel at:
-
-```text
-http://127.0.0.1:8000/admin/
-```
-
-Log in using the superuser credentials created in step 5 to view, filter, or delete `AudioContent` records through the UI.
-
----
-
-## ⚙️ Configuration & Storage Notes
-
-- **Media Root**: Uploaded/converted audio files are stored locally in the `media/` folder defined by `MEDIA_ROOT` in [`nigerian_audio/settings.py`](nigerian_audio/settings.py).
-- **Cloud Storage (S3)**: The project includes `django-storages` and `boto3` in `requirements.txt`, making it easy to configure AWS S3 or compatible object storage for production deployments.
-- **Production Checklist**:
-  - Set `DEBUG = False` in `nigerian_audio/settings.py`.
-  - Configure secure `ALLOWED_HOSTS` and a secret key loaded via environment variables.
-  - Configure a production-grade database (e.g. PostgreSQL) instead of SQLite.
+- **CORS Configuration**: If the frontend is hosted on a separate domain/port (e.g. `localhost:3000` or `localhost:5173`), ensure `django-cors-headers` is installed and configured in `INSTALLED_APPS` and `MIDDLEWARE` in Django settings.
+- **Audio Streaming**: The `audio_file` field returns a relative media path (e.g. `/media/audios/Yoruba/...`). Prefix it with the API base URL to stream in `<audio src="...">` elements or custom audio visualizers.
+- **Async Scraping Feedback**: Because downloading and converting audio takes a few seconds depending on the file size, always provide a loading state or spinner in the frontend UI while calling `POST /`.
