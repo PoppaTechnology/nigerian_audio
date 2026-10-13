@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from urllib.parse import urlparse
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -89,13 +90,31 @@ WSGI_APPLICATION = 'nigerian_audio.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
+if DATABASE_URL:
+    database_url = urlparse(DATABASE_URL)
+
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": database_url.path.lstrip("/"),
+            "USER": database_url.username,
+            "PASSWORD": database_url.password,
+            "HOST": database_url.hostname,
+            "PORT": database_url.port or 5432,
+            "OPTIONS": {
+                "sslmode": "require",
+            },
+        }
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
