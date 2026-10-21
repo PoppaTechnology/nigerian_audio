@@ -28,10 +28,10 @@ SECRET_KEY = 'django-insecure-5nzhxj7_42s5=dmb1-es1%5n8#a6kga7jtdms#qf*u$p4x&!dt
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "nigerian-audio.vercel.app",
-    ".vercel.app",
-    "localhost",
-    "127.0.0.1",
+    'nigerian-audio.vercel.app',
+    '.vercel.app',       
+    'localhost',
+    '127.0.0.1',
 ]
 
 
